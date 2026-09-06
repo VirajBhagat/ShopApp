@@ -3,12 +3,13 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { Screen, SubHeader } from '@/components/chrome';
-import { CardArt } from '@/components/CardArt';
+import { ProductArt, artAspect } from '@/components/ProductArt';
 import { ConditionBadge } from '@/components/product';
 import { BagIcon } from '@/components/icons';
-import { cardBySlug, inr, LISTINGS } from '@/lib/data';
+import { inr, productBySlug, variantLabel, VARIANTS } from '@/lib/data';
 
-const IN_CART = ['l1', 'l12'];
+/** A single, a sealed box and a pack of sleeves — the realistic mixed basket. */
+const IN_CART = ['v1', 'v30', 'v50'];
 
 /**
  * Cart with a visible hold timer.
@@ -27,7 +28,7 @@ export default function CartPage() {
     return () => clearInterval(t);
   }, []);
 
-  const items = LISTINGS.filter((l) => IN_CART.includes(l.id));
+  const items = VARIANTS.filter((l) => IN_CART.includes(l.id));
   const subtotal = items.reduce((n, l) => n + l.price, 0);
   const mrp = items.reduce((n, l) => n + (l.mrp ?? l.price), 0);
   const shipping = subtotal > 999 ? 0 : 79;
@@ -67,27 +68,37 @@ export default function CartPage() {
         <>
           <div className="mx-4 mt-4 flex items-center gap-2 rounded-tile bg-[#FBE3E1] px-3.5 py-2.5">
             <span className="text-[12.5px] text-accent-ink">
-              These copies are held for you — <span className="font-bold tabular-nums">{mm}:{ss}</span>
+              Single copies in this cart are held for you — <span className="font-bold tabular-nums">{mm}:{ss}</span>
             </span>
           </div>
 
           <div className="divide-y divide-line px-4">
             {items.map((l) => {
-              const card = cardBySlug(l.cardSlug)!;
+              const card = productBySlug(l.product)!;
               return (
                 <div key={l.id} className="flex gap-3 py-4">
-                  <Link href={`/card/${card.slug}`} className="w-[74px] shrink-0 rounded-tile bg-tile p-1.5">
-                    <div className="aspect-[5/7]">
-                      <CardArt slug={card.slug} name={card.name} franchise={card.franchise} holo />
-                    </div>
+                  <Link
+                    href={card.kind === 'single' ? `/card/${card.slug}` : `/product/${card.slug}`}
+                    className={`w-[74px] shrink-0 rounded-tile p-1.5 ${card.kind === 'single' ? 'bg-tile' : 'bg-surface-2'}`}
+                  >
+                    <div className={artAspect(card.kind)}><ProductArt product={card} /></div>
                   </Link>
                   <div className="flex-1">
                     <p className="text-[13.5px] font-semibold text-ink">{card.name}</p>
-                    <p className="text-[11.5px] text-muted">{card.set} · #{card.number}</p>
-                    <div className="flex items-center gap-1.5 pt-1.5">
-                      <ConditionBadge code={l.condition} />
-                      <span className="rounded-[3px] border border-line px-1.5 py-[2px] text-[10px] font-bold text-ink">{l.language}</span>
-                      {l.stock === 1 && <span className="text-[11px] font-semibold text-accent-ink">last one</span>}
+                    <p className="text-[11.5px] text-muted">
+                      {card.kind === 'single' ? `${card.set} · #${card.number}` : card.brand ?? card.sealedKind}
+                    </p>
+                    <div className="flex flex-wrap items-center gap-1.5 pt-1.5">
+                      {l.condition && <ConditionBadge code={l.condition} />}
+                      {variantLabel(l) && !l.condition && (
+                        <span className="rounded-[3px] border border-line px-1.5 py-[2px] text-[10px] font-bold text-ink">{variantLabel(l)}</span>
+                      )}
+                      {l.condition && l.language && (
+                        <span className="rounded-[3px] border border-line px-1.5 py-[2px] text-[10px] font-bold text-ink">{l.language}</span>
+                      )}
+                      {card.kind === 'single' && l.stock === 1 && (
+                        <span className="text-[11px] font-semibold text-accent-ink">last one</span>
+                      )}
                     </div>
                     <div className="flex items-baseline gap-2 pt-2">
                       <span className="text-[14.5px] font-bold text-ink">{inr(l.price)}</span>

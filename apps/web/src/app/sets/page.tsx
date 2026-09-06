@@ -3,8 +3,8 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { Header, PromoStrip, Screen } from '@/components/chrome';
-import { CardArt } from '@/components/CardArt';
-import { CARDS, franchises, tiles } from '@/lib/data';
+import { ProductArt } from '@/components/ProductArt';
+import { GEAR_CATEGORIES, PRODUCTS, franchises, tiles } from '@/lib/data';
 
 /**
  * Set browser — the card-shop equivalent of the reference app's Categories tab.
@@ -25,7 +25,7 @@ export default function SetsPage() {
       <p className="px-4 pb-4 text-[12.5px] text-muted">Every set we stock, newest first.</p>
 
       {franchises.map((f) => {
-        const cards = CARDS.filter((c) => c.franchise === f.slug);
+        const cards = PRODUCTS.filter((c) => c.kind === 'single' && c.franchise === f.slug);
         const sets = [...new Map(cards.map((c) => [c.setCode, c])).values()];
         const isOpen = open === f.slug;
         return (
@@ -50,7 +50,7 @@ export default function SetsPage() {
                     <Link key={s.setCode} href="/browse" className="block">
                       <div className="overflow-hidden rounded-card bg-tile p-2">
                         <div className="aspect-[5/7]">
-                          <CardArt slug={s.slug} name={s.name} franchise={s.franchise} holo />
+                          <ProductArt product={s} />
                         </div>
                       </div>
                       <p className="truncate pt-1.5 text-[11.5px] font-semibold text-ink">{s.set}</p>
@@ -64,7 +64,27 @@ export default function SetsPage() {
         );
       })}
 
-      <div className="px-4 py-8">
+      {/* Gear is franchise-agnostic, so it gets its own block rather than
+          being forced under a franchise it doesn't belong to. */}
+      <h2 className="section-title px-4 pb-1 pt-6">Sleeves & storage</h2>
+      <p className="px-4 pb-4 text-[12.5px] text-muted">Protection and storage for any game.</p>
+      <div className="grid grid-cols-3 gap-3 px-4 pb-6">
+        {GEAR_CATEGORIES.map((c) => {
+          const first = PRODUCTS.find((p) => p.category === c)!;
+          const n = tiles({ kind: 'accessory', category: c }).length;
+          return (
+            <Link key={c} href="/browse" className="block">
+              <div className="overflow-hidden rounded-card bg-surface-2 p-2">
+                <div className="aspect-square"><ProductArt product={first} /></div>
+              </div>
+              <p className="truncate pt-1.5 text-[11.5px] font-semibold text-ink">{c}</p>
+              <p className="text-[11px] text-muted">{n} products</p>
+            </Link>
+          );
+        })}
+      </div>
+
+      <div className="px-4 pb-8">
         <p className="text-center text-[12px] text-muted">Looking for a set we don&apos;t stock? Ask and we&apos;ll source it.</p>
       </div>
     </Screen>
